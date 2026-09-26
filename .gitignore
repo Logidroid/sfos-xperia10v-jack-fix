@@ -1,0 +1,4 @@
+scripts/__pycache__/
+*.pyc
+_fetch.txt
+pulse.log
