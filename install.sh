@@ -3,6 +3,12 @@
 # Run on the phone as defaultuser (Developer Mode). No root required.
 set -eu
 
+echo "ERROR: install disabled."
+echo "The PulseAudio systemd override caused infinite loading after the"
+echo "security code on reboot (session/lipstick never finishes starting)."
+echo "See README.md and RECOVERY.md. Do not use this installer until fixed."
+exit 1
+
 REPO_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 FIX="${HOME}/audio-jack-fix"
 UNIT_DIR="${HOME}/.config/systemd/user"

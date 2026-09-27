@@ -1,51 +1,61 @@
 # sfos-xperia10v-jack-fix
 
-Workaround for the **3.5 mm headphone jack** on the official **Sailfish OS** port for **Sony Xperia 10 V** (`pdx235` / XQ-DC54 and siblings).
+> ## ⚠️ CRITICAL WARNING — DO NOT INSTALL (for now)
+>
+> The **persistent PulseAudio systemd override** in this workaround has caused
+> an **infinite loading spinner after entering the security code** on at least
+> one Xperia 10 V (Sailfish OS 5.1.0.11). The jack worked until reboot; after
+> reboot the UI session never finishes starting.
+>
+> **Do not run `./install.sh` until this is redesigned.**  
+> If you already installed it and are stuck, see [RECOVERY.md](RECOVERY.md).
 
-On the Jolla port, PulseAudio never exposes `output-wired_headset` / `output-wired_headphone` because `/vendor/etc/primary_audio_policy_configuration.xml` omits wired devices — even though the kernel detects the jack and the HAL has headphone mixer paths.
+---
 
-This fix:
+Workaround (experimental) for the headphone jack on the official **Sailfish OS**
+port for **Sony Xperia 10 V** (`pdx235` / XQ-DC54 and siblings).
 
-1. Copies the vendor audio policy into `~/audio-jack-fix/`
-2. Patches it to declare wired headset/headphones (+ mic)
-3. Starts user PulseAudio with that policy (systemd drop-in, **no root**)
-4. Optionally selects the wired port when a jack is plugged
+On the Jolla port, PulseAudio never exposes `output-wired_headset` /
+`output-wired_headphone` because `/vendor/etc/primary_audio_policy_configuration.xml`
+omits wired devices — even though the kernel detects the jack and the HAL has
+headphone mixer paths.
 
-Validated on Sailfish OS **5.1.0.11** (Xperia 10 V).
+### What broke the session
 
-> Community Lineage-based ports (e.g. zambezi) often already have a working jack. This targets the **official Jolla** image.
+`install.sh` forced Pulse to start with a **custom** `default_sailfish.pa` via:
 
-## Install (on the phone)
+`~/.config/systemd/user/pulseaudio.service.d/jack-fix.conf`
 
-Developer Mode + SSH or Terminal:
+If that config fails or hangs at user-session start (after unlock), **lipstick**
+never comes up → infinite loading after the security code.
+
+A safer approach (runtime-only `pactl load-module …`, no boot override) is needed
+before this repo should be used again.
+
+## Recovery
+
+See **[RECOVERY.md](RECOVERY.md)** (SSH uninstall if possible, otherwise Sailfish
+reflash / factory reset that clears `/home`).
+
+## Old install steps (DISABLED — unsafe)
+
+<details>
+<summary>Previous instructions (do not use)</summary>
 
 ```sh
-# From a PC with the repo, or clone on-device if git is available:
-cd sfos-xperia10v-jack-fix
-chmod +x install.sh uninstall.sh scripts/*.sh
-./install.sh
+chmod +x install.sh uninstall.sh scripts/*
+./install.sh   # UNSAFE until fixed
 ```
 
-Plug headphones and play a sound. You should hear it in the headset.
-
-## Uninstall
+Uninstall (only if the phone still boots to UI or you have SSH):
 
 ```sh
 ./uninstall.sh
 ```
 
-## After a Sailfish update
+</details>
 
-Usually fine (user-space only). If audio breaks:
-
-```sh
-./uninstall.sh
-# then re-run ./install.sh if the jack is still missing
-```
-
-If a future SFOS release already includes wired ports in vendor policy, uninstall this workaround.
-
-## How it works
+## How it was supposed to work
 
 | Layer | Stock Jolla port | After this fix |
 |--------|------------------|----------------|
@@ -54,13 +64,6 @@ If a future SFOS release already includes wired ports in vendor policy, uninstal
 | Audio policy XML | No `WIRED_*` devices | Patched copy in `$HOME` |
 | Pulse `module-droid-card` | No wired ports | Ports created |
 | Routing | Speaker only | Wired when selected |
-
-## Limitations
-
-- User override of Pulse config; not a vendor/HAL rewrite
-- Auto-switch on plug may need a Pulse restart or re-run of `~/bin/reload-droid-jack.sh` in some cases
-- Not tested on Xperia 10 IV official port (similar symptom — may work with the same approach)
-- Does not replace a proper Jolla / community fix
 
 ## References
 
