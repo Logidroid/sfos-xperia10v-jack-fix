@@ -1,75 +1,57 @@
 # sfos-xperia10v-jack-fix
 
-> ## ⚠️ CRITICAL WARNING — DO NOT INSTALL (for now)
->
-> The **persistent PulseAudio systemd override** in this workaround has caused
-> an **infinite loading spinner after entering the security code** on at least
-> one Xperia 10 V (Sailfish OS 5.1.0.11). The jack worked until reboot; after
-> reboot the UI session never finishes starting.
->
-> **Do not run `./install.sh` until this is redesigned.**  
-> If you already installed it and are stuck, see [RECOVERY.md](RECOVERY.md).
+Workaround for the headphone jack on official **Sailfish OS** for **Sony Xperia 10 V**
+(`pdx235` / XQ-DC54). May help Xperia 10 IV (same class of bug; not verified).
 
----
+## Safety (read this)
 
-Workaround (experimental) for the headphone jack on the official **Sailfish OS**
-port for **Sony Xperia 10 V** (`pdx235` / XQ-DC54 and siblings).
+**v1** overrode `pulseaudio.service` at boot and caused **infinite loading after the
+security code** on reboot. That approach is **removed**.
 
-On the Jolla port, PulseAudio never exposes `output-wired_headset` /
-`output-wired_headphone` because `/vendor/etc/primary_audio_policy_configuration.xml`
-omits wired devices — even though the kernel detects the jack and the HAL has
-headphone mixer paths.
+**v2** (current):
 
-### What broke the session
+- Leaves Pulse boot config **stock**
+- Applies the patched audio policy **only after `lipstick` (UI) is up**
+- Still reboot-test before daily use
 
-`install.sh` forced Pulse to start with a **custom** `default_sailfish.pa` via:
+If you installed v1 and cannot unlock past the spinner, see [RECOVERY.md](RECOVERY.md).
 
-`~/.config/systemd/user/pulseaudio.service.d/jack-fix.conf`
+## Cause
 
-If that config fails or hangs at user-session start (after unlock), **lipstick**
-never comes up → infinite loading after the security code.
+Vendor `primary_audio_policy_configuration.xml` omits `AUDIO_DEVICE_OUT_WIRED_*`,
+so Pulse never creates `output-wired_headset` / `output-wired_headphone`.
 
-A safer approach (runtime-only `pactl load-module …`, no boot override) is needed
-before this repo should be used again.
+## Install (on the phone, UI working)
 
-## Recovery
-
-See **[RECOVERY.md](RECOVERY.md)** (SSH uninstall if possible, otherwise Sailfish
-reflash / factory reset that clears `/home`).
-
-## Old install steps (DISABLED — unsafe)
-
-<details>
-<summary>Previous instructions (do not use)</summary>
+Developer Mode + SSH or Terminal:
 
 ```sh
+cd sfos-xperia10v-jack-fix
 chmod +x install.sh uninstall.sh scripts/*
-./install.sh   # UNSAFE until fixed
+./install.sh
 ```
 
-Uninstall (only if the phone still boots to UI or you have SSH):
+Then **reboot once** and confirm the lock screen → home works. Only then rely on it.
+
+Manual apply anytime:
+
+```sh
+~/bin/apply-jack-policy.sh
+```
+
+## Uninstall
 
 ```sh
 ./uninstall.sh
 ```
 
-</details>
+## Recovery (v1 brick / spinner after PIN)
 
-## How it was supposed to work
+[RECOVERY.md](RECOVERY.md) — delete:
 
-| Layer | Stock Jolla port | After this fix |
-|--------|------------------|----------------|
-| Kernel jack detect | OK | OK |
-| HAL / mixer `headphones` | Present | Present |
-| Audio policy XML | No `WIRED_*` devices | Patched copy in `$HOME` |
-| Pulse `module-droid-card` | No wired ports | Ports created |
-| Routing | Speaker only | Wired when selected |
-
-## References
-
-- [Forum: Feedback on Xperia 10 V](https://forum.sailfishos.org/t/feedback-on-xperia-10-v/20114)
-- [Forum: Audio state 10 IV/V on 5.1](https://forum.sailfishos.org/t/xperia-10-iv-and-v-current-state-of-audio-as-of-5-1-3-5mm-jack-stereo-speakers/30511)
-- [pulseaudio-modules-droid](https://github.com/mer-hybris/pulseaudio-modules-droid)
+- `~/.config/systemd/user/pulseaudio.service.d/jack-fix.conf`
+- `~/.config/systemd/user/jack-audio-fix.service`
+- `~/audio-jack-fix/`
 
 ## Licence
 
