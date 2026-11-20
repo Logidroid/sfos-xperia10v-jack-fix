@@ -9,11 +9,11 @@ Workaround for the headphone jack on official **Sailfish OS** for **Sony Xperia 
 **infinite loading after the security code**. That approach is **removed and purged**
 by the installer.
 
-**v2.2** (current):
+**v3.0** (current):
 
 | Layer | Behaviour |
 |--------|-----------|
-| Pulse at boot | **Stock** — no file under `~/.config/.../pulseaudio.service.d/` |
+| Pulse at boot | **Stock** — no file under `${XDG_CONFIG_HOME:-$HOME/.config}/.../pulseaudio.service.d/` |
 | When jack policy applies | **Timer ~25s**: runtime drop-in in `$XDG_RUNTIME_DIR` + restart Pulse |
 | After reboot | `/run` is empty → stock Pulse again until timer |
 | On apply failure | Remove runtime drop-in + restore stock Pulse |
@@ -44,14 +44,14 @@ Then **reboot once** and confirm the UI comes up. Only then rely on it.
 
 Manual apply anytime (after UI is up):
 
-```sh
-~/bin/apply-jack-policy.sh
+```console
+$ ${XDG_BIN_HOME:-$HOME/.local/bin}/apply-jack-policy.sh
 ```
 
 ## Uninstall
 
-```sh
-./uninstall.sh
+```console
+$ ./uninstall.sh
 ```
 
 ## Recovery (v1 brick / spinner after PIN)

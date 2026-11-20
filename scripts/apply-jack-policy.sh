@@ -9,7 +9,9 @@
 # - Environment= overrides EnvironmentFile=CONFIG from /etc/sysconfig/pulseaudio.
 set -u
 
-FIX="${HOME}/audio-jack-fix"
+# Data dir; must match install.sh. Override with SFOS_JACK_FIX_DATA if needed.
+FIX=${SFOS_JACK_FIX_DATA:-"${XDG_DATA_HOME:-$HOME/.local/share}/sfos-xperia10v-jack-fix"}
+CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 CFG="${FIX}/audio_policy_configuration.xml"
 PRIMARY="${FIX}/primary_audio_policy_configuration.xml"
 PA_FILE="${FIX}/default_sailfish.pa"
@@ -18,7 +20,7 @@ LOCK="${FIX}/apply.lock"
 RUNTIME_DROPIN_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/systemd/user/pulseaudio.service.d"
 RUNTIME_DROPIN="${RUNTIME_DROPIN_DIR}/jack-runtime.conf"
 # Hard refusal: never recreate the v1 persistent path
-PERSIST_DROPIN="${HOME}/.config/systemd/user/pulseaudio.service.d/jack-fix.conf"
+PERSIST_DROPIN="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/pulseaudio.service.d/jack-fix.conf"
 
 log() { echo "$@" | tee -a "$LOG" 2>/dev/null || echo "$@"; }
 
