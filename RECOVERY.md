@@ -4,9 +4,9 @@ If you installed **v1** of this workaround and after reboot the phone stays on a
 **spinner forever after the PIN/code**, the user session is stuck because Pulse
 was started with a broken boot override:
 
-`~/.config/systemd/user/pulseaudio.service.d/jack-fix.conf`
+`${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/pulseaudio.service.d/jack-fix.conf`
 
-**v2.2 does not create that file** (only a runtime drop-in under `/run`, wiped on
+**v2.2+ does not create that file** (only a runtime drop-in under `/run`, wiped on
 reboot). If you only ever installed v2.2 and still hang, remove the units below
 anyway, then report it — that would be unexpected.
 
