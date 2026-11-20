@@ -6,9 +6,11 @@
 set -eu
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
-FIX="${HOME}/audio-jack-fix"
-UNIT_DIR="${HOME}/.config/systemd/user"
+APP="sfos-xperia10v-jack-fix"
+FIX="${XDG_DATA_HOME:-$HOME/.local/share}/${APP}"
+UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 DROPIN_DIR="${UNIT_DIR}/pulseaudio.service.d"
+BIN="${XDG_BIN_HOME:-$HOME/.local/bin}"
 
 echo "==> sfos-xperia10v-jack-fix v2.2 (runtime Pulse override after UI, stock boot)"
 echo "==> Install dir: ${FIX}"
@@ -40,8 +42,9 @@ rm -f "${UNIT_DIR}/user-session.target.wants/jack-audio-fix.service"
 rm -f "${UNIT_DIR}/timers.target.wants/jack-audio-fix.timer"
 # leftover v1 env/drop-in only — we rebuild pa.d below for post-UI restart
 rm -f "${FIX}/pulseaudio.env" 2>/dev/null || true
+rm -rf "${FIX}/bin" 2>/dev/null || true
 
-mkdir -p "${FIX}/pa.d" "${HOME}/bin" "${UNIT_DIR}"
+mkdir -p "${FIX}/pa.d" "${UNIT_DIR}"
 
 copy_req() {
   src=$1
@@ -126,25 +129,27 @@ load-module module-udev-detect
 EOF
 fi
 
-cp "${REPO_DIR}/scripts/apply-jack-policy.sh" "${HOME}/bin/apply-jack-policy.sh"
-chmod +x "${HOME}/bin/apply-jack-policy.sh"
-cp "${HOME}/bin/apply-jack-policy.sh" "${HOME}/bin/reload-droid-jack.sh"
-chmod +x "${HOME}/bin/reload-droid-jack.sh"
+# Install the helper directly in the user’s bin dir.
+mkdir -p "${BIN}"
+rm -f "${BIN}/apply-jack-policy.sh"
+rm -f "${BIN}/reload-droid-jack.sh"
+cp "${REPO_DIR}/scripts/apply-jack-policy.sh" "${BIN}/apply-jack-policy.sh"
+chmod +x "${BIN}/apply-jack-policy.sh"
 
 # Service: NOT WantedBy any session target (only started by timer / manually)
 cat > "${UNIT_DIR}/jack-audio-fix.service" << EOF
 [Unit]
 Description=Xperia jack fix: session Pulse restart with patched policy (after UI)
-Documentation=file://${REPO_DIR}/README.md
+Documentation="file://${REPO_DIR}/README.md"
 After=pulseaudio.service
-ConditionPathExists=${FIX}/default_sailfish.pa
+ConditionPathExists="${FIX}/default_sailfish.pa"
 Wants=pulseaudio.service
 
 [Service]
 Type=oneshot
 Nice=10
 TimeoutStartSec=90
-ExecStart=${HOME}/bin/apply-jack-policy.sh
+ExecStart="${BIN}/apply-jack-policy.sh"
 RemainAfterExit=yes
 # No Restart= — a failure must not loop during the session
 
@@ -173,7 +178,7 @@ systemctl --user enable jack-audio-fix.timer
 systemctl --user start jack-audio-fix.timer
 
 echo "==> Applying once now (UI already up)..."
-"${HOME}/bin/apply-jack-policy.sh" || true
+"${BIN}/apply-jack-policy.sh" || true
 sleep 1
 
 echo "==> Verification"
@@ -182,7 +187,7 @@ systemctl --user is-enabled jack-audio-fix.timer 2>/dev/null || true
 if pactl list cards 2>/dev/null | grep -q output-wired_headphone; then
   echo "OK: output-wired_headphone port is present."
 else
-  echo "WARN: wired ports not visible yet. Manual: ~/bin/apply-jack-policy.sh"
+  echo "WARN: wired ports not visible yet. Manual: ${BIN}/apply-jack-policy.sh"
 fi
 pactl list sinks 2>/dev/null | grep -E "Active Port:" || true
 
