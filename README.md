@@ -9,7 +9,7 @@ Workaround for the headphone jack on official **Sailfish OS** for **Sony Xperia 
 **infinite loading after the security code**. That approach is **removed and purged**
 by the installer.
 
-**v2.2** (current):
+**v3.0** (current):
 
 | Layer | Behaviour |
 |--------|-----------|

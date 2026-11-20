@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install Xperia 10 V wired jack workaround (SAFE v2.1).
+# Install Xperia 10 V wired jack workaround (SAFE v3.0).
 #
 # NEVER overrides pulseaudio.service at boot (v1 jack-fix.conf = spinner brick).
 # Applies patched policy via a systemd USER TIMER after the session is up.
@@ -12,7 +12,7 @@ UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 DROPIN_DIR="${UNIT_DIR}/pulseaudio.service.d"
 BIN="${XDG_BIN_HOME:-$HOME/.local/bin}"
 
-echo "==> sfos-xperia10v-jack-fix v2.2 (runtime Pulse override after UI, stock boot)"
+echo "==> sfos-xperia10v-jack-fix v3.0 (runtime Pulse override after UI, stock boot)"
 echo "==> Install dir: ${FIX}"
 
 if [ ! -f /vendor/etc/primary_audio_policy_configuration.xml ]; then
