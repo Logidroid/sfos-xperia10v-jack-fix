@@ -29,20 +29,28 @@ if grep -q AUDIO_DEVICE_OUT_WIRED_HEADPHONE /vendor/etc/primary_audio_policy_con
   echo "NOTE: vendor already declares wired headphones — you may not need this."
 fi
 
-# ---- purge EVERY unsafe v1 artifact first ----
-echo "==> Removing any v1 Pulse boot override / old units"
+# ---- v1/v2 migration: stop old units & remove every legacy location ----
+# Runs before anything is written, so the brick drop-in is gone even if the
+# rest of the install later fails.
+echo "==> Removing v1/v2 leftovers and old units"
 systemctl --user disable --now jack-audio-fix.timer 2>/dev/null || true
 systemctl --user disable --now jack-audio-fix.service 2>/dev/null || true
-rm -f "${DROPIN_DIR}/jack-fix.conf"
-rmdir "${DROPIN_DIR}" 2>/dev/null || true
-rm -f "${UNIT_DIR}/jack-audio-fix.service"
-rm -f "${UNIT_DIR}/jack-audio-fix.timer"
-rm -f "${UNIT_DIR}/default.target.wants/jack-audio-fix.service"
-rm -f "${UNIT_DIR}/user-session.target.wants/jack-audio-fix.service"
-rm -f "${UNIT_DIR}/timers.target.wants/jack-audio-fix.timer"
-# leftover v1 env/drop-in only — we rebuild pa.d below for post-UI restart
-rm -f "${FIX}/pulseaudio.env" 2>/dev/null || true
-rm -rf "${FIX}/bin" 2>/dev/null || true
+
+rm -rf "$HOME/audio-jack-fix" "${XDG_DATA_HOME:-$HOME}/audio-jack-fix"
+rm -rf "${FIX}/bin"
+rm -f "${FIX}/pulseaudio.env"
+rm -f "${HOME}/bin/apply-jack-policy.sh" "${HOME}/bin/reload-droid-jack.sh"
+rm -rf "${HOME}/bin/audio-jack-fix"
+rm -f "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/systemd/user/pulseaudio.service.d/jack-runtime.conf"
+
+for h in "$HOME/.config" "${XDG_CONFIG_HOME:-$HOME/.config}"; do
+  rm -f "$h/systemd/user/pulseaudio.service.d/jack-fix.conf"
+  rm -f "$h/systemd/user/jack-audio-fix.service" "$h/systemd/user/jack-audio-fix.timer"
+  rm -f "$h/systemd/user/default.target.wants/jack-audio-fix.service"
+  rm -f "$h/systemd/user/user-session.target.wants/jack-audio-fix.service"
+  rm -f "$h/systemd/user/timers.target.wants/jack-audio-fix.timer"
+  rmdir "$h/systemd/user/pulseaudio.service.d" 2>/dev/null || true
+done
 
 mkdir -p "${FIX}/pa.d" "${UNIT_DIR}"
 

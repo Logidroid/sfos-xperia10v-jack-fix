@@ -160,7 +160,7 @@ cat > "$RUNTIME_DROPIN" << EOF
 [Service]
 EnvironmentFile=
 EnvironmentFile=-/etc/sysconfig/pulseaudio
-EnvironmentFile=-"${FIX}/pulseaudio.env"
+EnvironmentFile=-${FIX}/pulseaudio.env
 EOF
 
 systemctl --user daemon-reload 2>/dev/null || true
