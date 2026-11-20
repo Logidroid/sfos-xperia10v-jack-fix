@@ -79,6 +79,7 @@ copy_opt /vendor/etc/r_submix_audio_policy_configuration.xml
 copy_opt /vendor/etc/bluetooth_audio_policy_configuration_7_0.xml
 copy_opt /vendor/etc/audio_policy_volumes.xml
 copy_opt /vendor/etc/default_volume_tables.xml
+copy_req "${REPO_DIR}/README.md"
 
 cp "${FIX}/primary_audio_policy_configuration.xml" \
    "${FIX}/primary_audio_policy_configuration.xml.orig"
@@ -148,7 +149,7 @@ chmod +x "${BIN}/apply-jack-policy.sh"
 cat > "${UNIT_DIR}/jack-audio-fix.service" << EOF
 [Unit]
 Description=Xperia jack fix: session Pulse restart with patched policy (after UI)
-Documentation="file://${REPO_DIR}/README.md"
+Documentation="file://${FIX}/README.md"
 After=pulseaudio.service
 ConditionPathExists="${FIX}/default_sailfish.pa"
 Wants=pulseaudio.service
